@@ -5,9 +5,10 @@
 #define POW_TWO 65537
 #define LEN_OF_PAT_AND_BUF 17
 #define UC const unsigned char
+#define LEN_OF_DICT 256
 
 void createShiftTable(int lenPat, int shifts[], UC pattern[]) {
-    for (int i = 0; i < 256; i++) {
+    for (int i = 0; i < LEN_OF_DICT; i++) {
         shifts[i] = lenPat;
     }
     for (int i = 0; i < lenPat - 1; i++) {
@@ -15,16 +16,18 @@ void createShiftTable(int lenPat, int shifts[], UC pattern[]) {
     }
 }
 
-void algorithm(UC *str, UC *pattern, int patLen, const int shifts[], int strLen) {
+int algorithm(UC *str, UC *pattern, int patLen, const int shifts[], int strLen, int *ind) {
     int k = 0;
     while (k + patLen <= strLen) {
         int i = patLen;
         do {
-            printf("%d ", i + k);
+            printf("%d ", i + k + *ind);
             i--;
         } while (i > 0 && str[i + k] == pattern[i]);
         k += shifts[str[patLen - 1 + k]];
     }
+    *ind += k;
+    return strLen - k;
 }
 
 int main() {
@@ -45,7 +48,7 @@ int main() {
         fgetc(stdin);
     }
 
-    int shifts[256] = {0};
+    int shifts[LEN_OF_DICT] = {0};
 
     createShiftTable(lenPat, shifts, pattern);
 
@@ -53,9 +56,20 @@ int main() {
      * pattern - считанная из stdin подстрока, которую нужно искать
      * lenPat - его длина
     */
-    FILE *in = fopen("in.txt", "r");
-    int strLen = (int) fread(str, 1, POW_TWO - 1, in);//stdin);
-    algorithm(str, pattern, lenPat, shifts, strLen);
+    int strLen, ind = 0, indexStr = 0;
+
+    while ((strLen = fread(&str[indexStr], sizeof(char), (size_t) (POW_TWO - 1 - indexStr), stdin)) != 0) {
+        strLen += indexStr;
+
+        indexStr = algorithm(str, pattern, lenPat, shifts, strLen, &ind);
+
+        for (int i = 0; i < indexStr; i++)
+            buffer[i] = str[strLen - indexStr + i];
+        memset(str, '\0', POW_TWO);
+        for (int i = 0; i < indexStr; i++)
+            str[i] = buffer[i];
+    }
+    free(str);
 
     return 0;
 }
