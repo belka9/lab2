@@ -52,10 +52,6 @@ int main() {
 
     createShiftTable(lenPat, shifts, pattern);
 
-    /* str - строка для буферного считывания, длина - pow-two, занулена
-     * pattern - считанная из stdin подстрока, которую нужно искать
-     * lenPat - его длина
-    */
     int strLen, ind = 0, indexStr = 0;
 
     while ((strLen = fread(&str[indexStr], sizeof(char), (size_t) (POW_TWO - 1 - indexStr), stdin)) != 0) {
