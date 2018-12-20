@@ -1,14 +1,15 @@
 #include <stdio.h>
 #include <memory.h>
 #include <stdlib.h>
+#include <string.h>
+#include <limits.h>
 
-#define POW_TWO 65537
+#define POW_TWO 65536
 #define LEN_OF_PAT_AND_BUF 17
-#define UC const unsigned char
-#define LEN_OF_DICT 256
+typedef unsigned char UC;
 
-void createShiftTable(int lenPat, int shifts[], UC pattern[]) {
-    for (int i = 0; i < LEN_OF_DICT; i++) {
+static void createShiftTable(int lenPat, int shifts[], const UC *pattern) {
+    for (int i = 0; i < UCHAR_MAX; i++) {
         shifts[i] = lenPat;
     }
     for (int i = 0; i < lenPat - 1; i++) {
@@ -16,7 +17,7 @@ void createShiftTable(int lenPat, int shifts[], UC pattern[]) {
     }
 }
 
-int algorithm(UC *str, UC *pattern, int patLen, const int shifts[], int strLen, int *ind) {
+static int loggingOfBM(const UC *str, const UC *pattern, int patLen, const int shifts[], int strLen, int *ind) {
     int k = 0;
     while (k + patLen <= strLen) {
         int i = patLen;
@@ -31,12 +32,12 @@ int algorithm(UC *str, UC *pattern, int patLen, const int shifts[], int strLen, 
 }
 
 int main() {
-    unsigned char pattern[LEN_OF_PAT_AND_BUF] = {0};
-    unsigned char buffer[LEN_OF_PAT_AND_BUF] = {0};
-    unsigned char *str = (unsigned char *) malloc(sizeof(unsigned char) * POW_TWO);
+    UC pattern[LEN_OF_PAT_AND_BUF] = {0};
+    UC buffer[LEN_OF_PAT_AND_BUF] = {0};
+    UC *str = (UC *) malloc(sizeof(UC) * POW_TWO);
     if (str == NULL) {
         printf("memory didn't give");
-        return 0;
+        return -1;
     }
     memset(str, '\0', POW_TWO);
     fgets((char *) pattern, LEN_OF_PAT_AND_BUF, stdin);
@@ -48,7 +49,7 @@ int main() {
         fgetc(stdin);
     }
 
-    int shifts[LEN_OF_DICT] = {0};
+    int shifts[UCHAR_MAX] = {0};
 
     createShiftTable(lenPat, shifts, pattern);
 
@@ -57,13 +58,11 @@ int main() {
     while ((strLen = fread(&str[indexStr], sizeof(char), (size_t) (POW_TWO - 1 - indexStr), stdin)) != 0) {
         strLen += indexStr;
 
-        indexStr = algorithm(str, pattern, lenPat, shifts, strLen, &ind);
+        indexStr = loggingOfBM(str, pattern, lenPat, shifts, strLen, &ind);
 
-        for (int i = 0; i < indexStr; i++)
-            buffer[i] = str[strLen - indexStr + i];
+        memmove(buffer, &str[strLen - indexStr], (size_t) indexStr);
         memset(str, '\0', POW_TWO);
-        for (int i = 0; i < indexStr; i++)
-            str[i] = buffer[i];
+        memmove(str, buffer, (size_t) indexStr);
     }
     free(str);
 
